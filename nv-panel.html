@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>NV.PANEL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0C;
+    --panel:#141417;
+    --panel-2:#1B1B1F;
+    --line:#2A2A2E;
+    --line-soft:#1E1E22;
+    --white:#FFFFFF;
+    --muted:#8A8A93;
+    --muted-2:#5C5C63;
+    --ok:#E8E8EA;
+    --danger:#E2554A;
+    --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    overflow:hidden;
+    position:fixed;
+    inset:0;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--white);color:var(--bg);}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted-2);}
+
+  /* ---------- background grid texture ---------- */
+  .grid-bg{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:42px 42px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity:.5;
+  }
+
+  /* ---------- app shell ---------- */
+  #app{position:relative;z-index:1;height:100%;width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;}
+
+  /* ====================== LOGIN ====================== */
+  #login-screen{
+    position:fixed;inset:0;z-index:50;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    background:var(--bg);
+  }
+  .login-card{
+    width:100%;max-width:380px;
+    animation:rise .6s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+  .brand{
+    display:flex;align-items:center;gap:10px;margin-bottom:34px;justify-content:center;
+  }
+  .brand-mark{
+    width:38px;height:38px;border:1.5px solid var(--white);border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;
+    position:relative;
+  }
+  .brand-mark::after{
+    content:'';position:absolute;top:-3px;right:-3px;width:6px;height:6px;border-radius:50%;
+    background:var(--white);box-shadow:0 0 8px 1px rgba(255,255,255,.7);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .brand-text{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.04em;font-size:20px;}
+  .brand-text span{color:var(--muted);}
+
+  .login-status{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    text-align:center;margin-bottom:28px;letter-spacing:.08em;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .dot-live{width:6px;height:6px;border-radius:50%;background:#4ADE80;box-shadow:0 0 6px 1px rgba(74,222,128,.7);animation:pulse 1.8s ease-in-out infinite;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    margin-bottom:8px;letter-spacing:.07em;text-transform:uppercase;
+  }
+  .field input{
+    width:100%;padding:14px 16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;color:var(--white);
+    font-family:'Inter',sans-serif;font-size:15px;outline:none;
+    transition:border-color .2s, background .2s;
+  }
+  .field input:focus{border-color:var(--white);background:var(--panel-2);}
+  .field input::placeholder{color:var(--muted-2);}
+
+  .btn-primary{
+    width:100%;padding:14px;background:var(--white);color:var(--bg);
+    border:none;border-radius:10px;font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:14px;letter-spacing:.04em;cursor:pointer;
+    margin-top:6px;transition:transform .15s, opacity .15s;
+    text-transform:uppercase;
+  }
+  .btn-primary:active{transform:scale(.98);opacity:.85;}
+
+  .login-toggle{
+    text-align:center;margin-top:20px;font-size:13px;color:var(--muted);
+  }
+  .login-toggle button{
+    background:none;border:none;color:var(--white);font-weight:600;cursor:pointer;
+    font-size:13px;text-decoration:underline;text-underline-offset:3px;
+  }
+  .login-error{
+    color:var(--danger);font-size:12.5px;margin-top:10px;text-align:center;
+    font-family:'JetBrains Mono',monospace;display:none;
+  }
+
+  /* ====================== HEADER ====================== */
+  .topbar{
+    padding:20px 20px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    flex-shrink:0;
+  }
+  .topbar-left{display:flex;flex-direction:column;}
+  .crumb{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);
+    letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;
+  }
+  .crumb b{color:var(--white);}
+  .page-title{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px;letter-spacing:-.01em;}
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .user-chip{
+    display:flex;align-items:center;gap:7px;
+    background:var(--panel);border:1px solid var(--line);
+    padding:7px 12px 7px 8px;border-radius:100px;
+  }
+  .user-avatar{
+    width:22px;height:22px;border-radius:50%;background:var(--white);color:var(--bg);
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:10.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .user-chip span{font-size:12.5px;font-weight:600;}
+
+  /* ====================== MAIN VIEWS ====================== */
+  .views{flex:1;overflow:hidden;position:relative;}
+  .view{
+    position:absolute;inset:0;overflow-y:auto;padding:0 20px 100px;
+    opacity:0;pointer-events:none;transform:translateY(10px);
+    transition:opacity .28s ease, transform .28s ease;
+  }
+  .view.active{opacity:1;pointer-events:auto;transform:translateY(0);}
+
+  /* -------- beranda -------- */
+  .hero-card{
+    background:linear-gradient(155deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;margin-bottom:16px;position:relative;overflow:hidden;
+  }
+  .hero-card::before{
+    content:'';position:absolute;top:-40%;right:-20%;width:200px;height:200px;
+    background:radial-gradient(circle, rgba(255,255,255,.06), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+  .hero-greet{font-size:22px;font-weight:700;margin-bottom:6px;}
+  .hero-sub{font-size:13.5px;color:var(--muted);line-height:1.5;}
+
+  .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;}
+  .stat-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:11px;
+    padding:14px 12px;
+  }
+  .stat-num{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;}
+  .stat-label{font-size:10.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+
+  .section-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.1em;margin:22px 0 12px;
+  }
+  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .quick-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px;cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .quick-card:active{transform:scale(.97);}
+  .quick-card:hover{border-color:var(--muted-2);background:var(--panel-2);}
+  .quick-icon{font-size:20px;margin-bottom:10px;display:block;}
+  .quick-name{font-size:13.5px;font-weight:600;}
+
+  /* -------- all fitur grid -------- */
+  .feature-grid{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+  .feature-row{
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:15px 16px;cursor:pointer;transition:border-color .15s, background .15s, transform .15s;
+  }
+  .feature-row:active{transform:scale(.98);}
+  .feature-row:hover{border-color:var(--muted-2);background:var(--panel-2);}
+  .feature-ic{
+    width:42px;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+  }
+  .feature-info{flex:1;}
+  .feature-title{font-size:14.5px;font-weight:600;margin-bottom:2px;}
+  .feature-desc{font-size:12px;color:var(--muted);}
+  .feature-arrow{color:var(--muted-2);font-size:18px;}
+
+  /* -------- settings -------- */
+  .settings-block{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px;
+  }
+  .settings-item{
+    display:flex;align-items:center;justify-content:between;gap:12px;
+    padding:15px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .settings-item:last-child{border-bottom:none;}
+  .settings-item-label{flex:1;}
+  .settings-item-title{font-size:14px;font-weight:600;margin-bottom:2px;}
+  .settings-item-desc{font-size:11.5px;color:var(--muted);}
+  .settings-profile{
+    display:flex;align-items:center;gap:14px;padding:18px 16px;
+  }
+  .settings-avatar{
+    width:52px;height:52px;border-radius:14px;background:var(--white);color:var(--bg);
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:20px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .settings-name{font-size:16px;font-weight:700;}
+  .settings-email{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .toggle{
+    width:42px;height:24px;border-radius:100px;background:var(--line);position:relative;
+    cursor:pointer;flex-shrink:0;transition:background .2s;
+  }
+  .toggle.on{background:var(--white);}
+  .toggle::after{
+    content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);transition:transform .2s;
+  }
+  .toggle.on::after{transform:translateX(18px);background:var(--bg);}
+  .btn-logout{
+    width:100%;padding:14px;background:transparent;border:1px solid var(--danger);
+    color:var(--danger);border-radius:10px;font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:13px;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;
+    margin-top:8px;
+  }
+  .btn-logout:active{background:rgba(226,85,74,.1);}
+
+  /* ====================== MODULE OVERLAY (sub-features) ====================== */
+  .module{
+    position:fixed;inset:0;z-index:40;background:var(--bg);
+    display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .32s cubic-bezier(.16,1,.3,1);
+  }
+  .module.active{transform:translateX(0);}
+  .module-header{
+    display:flex;align-items:center;gap:12px;padding:18px 20px;
+    border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .back-btn{
+    width:36px;height:36px;border-radius:9px;background:var(--panel);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--white);
+    font-size:16px;flex-shrink:0;
+  }
+  .back-btn:active{transform:scale(.93);}
+  .module-title-wrap{flex:1;}
+  .module-crumb{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+  .module-title{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;}
+  .module-body{flex:1;overflow-y:auto;padding:18px 20px 40px;}
+
+  /* ---- todo ---- */
+  .todo-input-row{display:flex;gap:8px;margin-bottom:18px;}
+  .todo-input-row input{
+    flex:1;padding:13px 14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;color:var(--white);font-size:14px;outline:none;
+  }
+  .todo-input-row input:focus{border-color:var(--white);}
+  .todo-add-btn{
+    width:46px;background:var(--white);color:var(--bg);border:none;border-radius:10px;
+    font-size:20px;font-weight:700;cursor:pointer;
+  }
+  .todo-add-btn:active{transform:scale(.93);}
+  .todo-list{display:flex;flex-direction:column;gap:8px;}
+  .todo-item{
+    display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:11px;padding:13px 14px;
+  }
+  .todo-check{
+    width:21px;height:21px;border-radius:6px;border:1.5px solid var(--muted-2);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;
+    transition:background .15s, border-color .15s;
+  }
+  .todo-check.done{background:var(--white);border-color:var(--white);color:var(--bg);}
+  .todo-text{flex:1;font-size:14px;word-break:break-word;}
+  .todo-text.done{color:var(--muted-2);text-decoration:line-through;}
+  .todo-del{color:var(--muted-2);cursor:pointer;font-size:16px;padding:4px;flex-shrink:0;}
+  .todo-empty{text-align:center;padding:60px 20px;color:var(--muted-2);}
+  .todo-empty-ic{font-size:32px;margin-bottom:10px;}
+  .todo-empty-txt{font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
+
+  /* ---- matematika ---- */
+  .calc-display{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px 14px;margin-bottom:12px;text-align:right;
+  }
+  .calc-expr{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);min-height:14px;word-break:break-all;}
+  .calc-result{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;margin-top:4px;word-break:break-all;}
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:300px;margin:0 auto;}
+  .calc-btn{
+    aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    color:var(--white);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .calc-btn:active{background:var(--panel-2);transform:scale(.95);}
+  .calc-btn.op{background:var(--panel-2);color:var(--white);}
+  .calc-btn.eq{background:var(--white);color:var(--bg);}
+  .calc-btn.fn{font-size:11px;color:var(--muted);}
+
+  /* ---- coding ---- */
+  .code-tabs{display:flex;gap:6px;margin-bottom:12px;}
+  .code-tab{
+    padding:9px 16px;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--muted);
+    cursor:pointer;
+  }
+  .code-tab.active{background:var(--white);color:var(--bg);border-color:var(--white);}
+  .code-editor-wrap{position:relative;margin-bottom:12px;}
+  .code-editor{
+    width:100%;min-height:160px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px;color:var(--white);font-family:'JetBrains Mono',monospace;
+    font-size:13px;line-height:1.6;outline:none;resize:vertical;tab-size:2;
+  }
+  .code-editor:focus{border-color:var(--white);}
+  .code-pane{display:none;}
+  .code-pane.active{display:block;}
+  .code-actions{display:flex;gap:8px;margin-bottom:16px;}
+  .code-run-btn{
+    flex:1;padding:13px;background:var(--white);color:var(--bg);border:none;border-radius:10px;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;cursor:pointer;
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .code-run-btn:active{transform:scale(.98);}
+  .code-cheat-btn{
+    padding:13px 16px;background:var(--panel);border:1px solid var(--line);color:var(--white);
+    border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer;
+  }
+  .code-output-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .code-output{
+    width:100%;height:200px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    position:relative;
+  }
+  .code-output iframe{width:100%;height:100%;border:none;}
+  .code-output-placeholder{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--panel);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;
+    text-transform:uppercase;letter-spacing:.06em;gap:8px;text-align:center;padding:20px;
+  }
+  .code-output-placeholder .ic{font-size:22px;}
+  .code-output-placeholder.hidden{display:none;}
+
+  .cheat-overlay{
+    position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+    display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .cheat-overlay.active{opacity:1;pointer-events:auto;}
+  .cheat-sheet{
+    width:100%;max-width:560px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:20px 20px 0 0;max-height:78vh;display:flex;flex-direction:column;
+    transform:translateY(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);
+  }
+  .cheat-overlay.active .cheat-sheet{transform:translateY(0);}
+  .cheat-header{
+    display:flex;align-items:center;justify-content:space-between;padding:18px 20px;
+    border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .cheat-handle{width:36px;height:4px;background:var(--line);border-radius:4px;margin:10px auto 0;}
+  .cheat-body{overflow-y:auto;padding:14px 20px 30px;}
+  .cheat-group{margin-bottom:18px;}
+  .cheat-group-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .cheat-line{
+    display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  .cheat-line code{color:var(--white);}
+  .cheat-line span{color:var(--muted);font-family:'Inter',sans-serif;text-align:right;}
+  .close-x{color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
+
+  /* ---- canvas ---- */
+  .canvas-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .canvas-tools-row{margin-bottom:8px;}
+  .shape-tool{user-select:none;}
+  .shape-tool.active{background:var(--white);color:var(--bg);border-color:var(--white);}
+  .color-dot{
+    width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;
+  }
+  .color-dot.active{border-color:var(--white);}
+  .canvas-tool-btn{
+    padding:9px 14px;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    color:var(--white);font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;
+  }
+  .canvas-wrap{
+    background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line);touch-action:none;
+  }
+  #drawCanvas{display:block;width:100%;touch-action:none;}
+  .canvas-size-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+  .canvas-size-row input[type=range]{flex:1;accent-color:#fff;}
+  .canvas-size-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);width:42px;}
+
+  /* ====================== BOTTOM NAV ====================== */
+  .bottom-nav{
+    flex-shrink:0;display:flex;border-top:1px solid var(--line);
+    background:rgba(10,10,12,.92);backdrop-filter:blur(14px);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    position:relative;z-index:10;
+  }
+  .nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;
+    padding:7px 0;cursor:pointer;color:var(--muted-2);transition:color .2s;
+  }
+  .nav-item.active{color:var(--white);}
+  .nav-ic{font-size:19px;}
+  .nav-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;}
+  .nav-indicator{width:4px;height:4px;border-radius:50%;background:var(--white);opacity:0;transition:opacity .2s;}
+  .nav-item.active .nav-indicator{opacity:1;}
+
+  @media (max-width:380px){
+    .stat-row{gap:7px;}
+    .quick-grid{gap:8px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">NV</div>
+      <div class="brand-text">NV<span>.PANEL</span></div>
+    </div>
+    <div class="login-status"><span class="dot-live"></span><span id="loginStatusText">SYSTEM READY</span></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="Masukkan username" value="novalZ" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Masukkan password" value="hyzren" required>
+      </div>
+      <button type="submit" class="btn-primary" id="loginBtn">Masuk</button>
+      <div class="login-error" id="loginError">Username atau password salah.</div>
+    </form>
+  </div>
+</div>
+<path>/home/claude/nv-panel.html</path>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app" style="display:none;">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="crumb">NV.PANEL / <b id="crumbCurrent">BERANDA</b></div>
+      <div class="page-title" id="pageTitle">Beranda</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span id="navUsername">user</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="views">
+
+    <!-- ---------- BERANDA ---------- -->
+    <div class="view active" data-view="beranda">
+      <div class="hero-card">
+        <div class="hero-eyebrow">// status hari ini</div>
+        <div class="hero-greet" id="greetText">Selamat datang.</div>
+        <div class="hero-sub">Semua fitur kamu ada di satu panel. Pilih modul di bawah untuk mulai.</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-num" id="statTodoTotal">0</div>
+          <div class="stat-label">To-Do</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statTodoDone">0</div>
+          <div class="stat-label">Selesai</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">4</div>
+          <div class="stat-label">Fitur</div>
+        </div>
+      </div>
+
+      <div class="section-label">Akses cepat</div>
+      <div class="quick-grid">
+        <div class="quick-card" data-open="canvas">
+          <span class="quick-icon">✏️</span>
+          <div class="quick-name">Canvas</div>
+        </div>
+        <div class="quick-card" data-open="todo">
+          <span class="quick-icon">✅</span>
+          <div class="quick-name">To-Do List</div>
+        </div>
+        <div class="quick-card" data-open="math">
+          <span class="quick-icon">∑</span>
+          <div class="quick-name">Matematika</div>
+        </div>
+        <div class="quick-card" data-open="coding">
+          <span class="quick-icon">⌨️</span>
+          <div class="quick-name">Coding</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- ALL FITUR ---------- -->
+    <div class="view" data-view="fitur">
+      <div class="section-label">Semua fitur</div>
+      <div class="feature-grid">
+        <div class="feature-row" data-open="canvas">
+          <div class="feature-ic">✏️</div>
+          <div class="feature-info">
+            <div class="feature-title">Canvas</div>
+            <div class="feature-desc">Coret-coret bebas di kanvas digital</div>
+          </div>
+          <div class="feature-arrow">›</div>
+        </div>
+        <div class="feature-row" data-open="todo">
+          <div class="feature-ic">✅</div>
+          <div class="feature-info">
+            <div class="feature-title">To-Do List</div>
+            <div class="feature-desc">Catat dan pantau tugas harianmu</div>
+          </div>
+          <div class="feature-arrow">›</div>
+        </div>
+        <div class="feature-row" data-open="math">
+          <div class="feature-ic">∑</div>
+          <div class="feature-info">
+            <div class="feature-title">Matematika</div>
+            <div class="feature-desc">Kalkulator cepat untuk hitungan harian</div>
+          </div>
+          <div class="feature-arrow">›</div>
+        </div>
+        <div class="feature-row" data-open="coding">
+          <div class="feature-ic">⌨️</div>
+          <div class="feature-info">
+            <div class="feature-title">Coding</div>
+            <div class="feature-desc">Tulis & jalankan HTML, JS, CSS langsung</div>
+          </div>
+          <div class="feature-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- SETTING ---------- -->
+    <div class="view" data-view="setting">
+      <div class="settings-block">
+        <div class="settings-profile">
+          <div class="settings-avatar" id="setAvatar">U</div>
+          <div>
+            <div class="settings-name" id="setUsername">user</div>
+            <div class="settings-email">Akun lokal tersimpan di perangkat ini</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Preferensi</div>
+      <div class="settings-block">
+        <div class="settings-item">
+          <div class="settings-item-label">
+            <div class="settings-item-title">Getaran sentuhan</div>
+            <div class="settings-item-desc">Efek getar saat menekan tombol</div>
+          </div>
+          <div class="toggle" id="toggleHaptic"></div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-label">
+            <div class="settings-item-title">Simpan otomatis</div>
+            <div class="settings-item-desc">Simpan data to-do & canvas otomatis</div>
+          </div>
+          <div class="toggle on" id="toggleAutosave"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Data</div>
+      <div class="settings-block">
+        <div class="settings-item" id="clearTodoBtn" style="cursor:pointer;">
+          <div class="settings-item-label">
+            <div class="settings-item-title">Hapus semua To-Do</div>
+            <div class="settings-item-desc">Tindakan ini tidak bisa dibatalkan</div>
+          </div>
+        </div>
+        <div class="settings-item" id="clearCanvasBtn" style="cursor:pointer;">
+          <div class="settings-item-label">
+            <div class="settings-item-title">Hapus canvas tersimpan</div>
+            <div class="settings-item-desc">Kosongkan gambar yang tersimpan</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-logout" id="logoutBtn">Keluar Akun</button>
+    </div>
+
+  </div>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-nav="beranda">
+      <div class="nav-indicator"></div>
+      <span class="nav-ic">⌂</span>
+      <span class="nav-label">Beranda</span>
+    </div>
+    <div class="nav-item" data-nav="fitur">
+      <div class="nav-indicator"></div>
+      <span class="nav-ic">▦</span>
+      <span class="nav-label">All Fitur</span>
+    </div>
+    <div class="nav-item" data-nav="setting">
+      <div class="nav-indicator"></div>
+      <span class="nav-ic">⚙</span>
+      <span class="nav-label">Setting</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODULE: CANVAS ============ -->
+<div class="module" id="module-canvas">
+  <div class="module-header">
+    <div class="back-btn" data-close-module>‹</div>
+    <div class="module-title-wrap">
+      <div class="module-crumb">Fitur / Kanvas</div>
+      <div class="module-title">Canvas</div>
+    </div>
+  </div>
+  <div class="module-body">
+    <div class="canvas-toolbar canvas-tools-row">
+      <div class="canvas-tool-btn shape-tool active" data-shape="pen">✏️ Pena</div>
+      <div class="canvas-tool-btn shape-tool" data-shape="eraser">🧹 Hapus</div>
+      <div class="canvas-tool-btn shape-tool" data-shape="line">／ Garis</div>
+      <div class="canvas-tool-btn shape-tool" data-shape="rect">▭ Kotak</div>
+      <div class="canvas-tool-btn shape-tool" data-shape="rrect">▬ P.Panjang</div>
+      <div class="canvas-tool-btn shape-tool" data-shape="circle">◯ Lingkaran</div>
+    </div>
+    <div class="canvas-toolbar">
+      <div class="color-dot active" style="background:#0A0A0C;border:1px solid #2A2A2E;" data-color="#0A0A0C"></div>
+      <div class="color-dot" style="background:#E2554A;" data-color="#E2554A"></div>
+      <div class="color-dot" style="background:#3B82F6;" data-color="#3B82F6"></div>
+      <div class="color-dot" style="background:#4ADE80;" data-color="#4ADE80"></div>
+      <div class="color-dot" style="background:#FACC15;" data-color="#FACC15"></div>
+      <div class="canvas-tool-btn" id="clearCanvasBtnInline">Bersihkan</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="drawCanvas" height="380"></canvas>
+    </div>
+    <div class="canvas-size-row">
+      <span class="canvas-size-label">Ukuran</span>
+      <input type="range" id="brushSize" min="1" max="30" value="4">
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODULE: TODO ============ -->
+<div class="module" id="module-todo">
+  <div class="module-header">
+    <div class="back-btn" data-close-module>‹</div>
+    <div class="module-title-wrap">
+      <div class="module-crumb">Fitur / To-Do</div>
+      <div class="module-title">To-Do List</div>
+    </div>
+  </div>
+  <div class="module-body">
+    <div class="todo-input-row">
+      <input type="text" id="todoInput" placeholder="Tulis tugas baru...">
+      <button class="todo-add-btn" id="todoAddBtn">+</button>
+    </div>
+    <div class="todo-list" id="todoList"></div>
+  </div>
+</div>
+
+<!-- ============ MODULE: MATEMATIKA ============ -->
+<div class="module" id="module-math">
+  <div class="module-header">
+    <div class="back-btn" data-close-module>‹</div>
+    <div class="module-title-wrap">
+      <div class="module-crumb">Fitur / Matematika</div>
+      <div class="module-title">Kalkulator</div>
+    </div>
+  </div>
+  <div class="module-body">
+    <div class="calc-display">
+      <div class="calc-expr" id="calcExpr">&nbsp;</div>
+      <div class="calc-result" id="calcResult">0</div>
+    </div>
+    <div class="calc-grid">
+      <div class="calc-btn fn" data-calc="clear">AC</div>
+      <div class="calc-btn fn" data-calc="back">⌫</div>
+      <div class="calc-btn fn" data-calc="percent">%</div>
+      <div class="calc-btn op" data-calc="/">÷</div>
+
+      <div class="calc-btn" data-calc="7">7</div>
+      <div class="calc-btn" data-calc="8">8</div>
+      <div class="calc-btn" data-calc="9">9</div>
+      <div class="calc-btn op" data-calc="*">×</div>
+
+      <div class="calc-btn" data-calc="4">4</div>
+      <div class="calc-btn" data-calc="5">5</div>
+      <div class="calc-btn" data-calc="6">6</div>
+      <div class="calc-btn op" data-calc="-">−</div>
+
+      <div class="calc-btn" data-calc="1">1</div>
+      <div class="calc-btn" data-calc="2">2</div>
+      <div class="calc-btn" data-calc="3">3</div>
+      <div class="calc-btn op" data-calc="+">+</div>
+
+      <div class="calc-btn" data-calc="0" style="grid-column:span 2;border-radius:12px;">0</div>
+      <div class="calc-btn" data-calc=".">.</div>
+      <div class="calc-btn eq" data-calc="=">=</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODULE: CODING ============ -->
+<div class="module" id="module-coding">
+  <div class="module-header">
+    <div class="back-btn" data-close-module>‹</div>
+    <div class="module-title-wrap">
+      <div class="module-crumb">Fitur / Coding</div>
+      <div class="module-title">Code Runner</div>
+    </div>
+  </div>
+  <div class="module-body">
+    <div class="code-tabs">
+      <div class="code-tab active" data-codetab="html">HTML</div>
+      <div class="code-tab" data-codetab="css">CSS</div>
+      <div class="code-tab" data-codetab="js">JS</div>
+    </div>
+
+    <div class="code-editor-wrap">
+      <div class="code-pane active" data-pane="html">
+        <textarea class="code-editor" id="codeHtml" spellcheck="false">&lt;h2&gt;Halo NV.Panel&lt;/h2&gt;
+&lt;p&gt;Ini contoh elemen HTML.&lt;/p&gt;
+&lt;button id="btn"&gt;Klik aku&lt;/button&gt;</textarea>
+      </div>
+      <div class="code-pane" data-pane="css">
+        <textarea class="code-editor" id="codeCss" spellcheck="false">body{
+  font-family: sans-serif;
+  padding: 16px;
+  color: #111;
+}
+button{
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #111;
+  color: #fff;
+}</textarea>
+      </div>
+      <div class="code-pane" data-pane="js">
+        <textarea class="code-editor" id="codeJs" spellcheck="false">document.getElementById('btn').addEventListener('click', () => {
+  alert('Tombol diklik!');
+});</textarea>
+      </div>
+    </div>
+
+    <div class="code-actions">
+      <button class="code-run-btn" id="runCodeBtn">▶ Jalankan</button>
+      <button class="code-cheat-btn" id="openCheatBtn">📋 Contekan</button>
+    </div>
+
+    <div class="code-output-label">Hasil</div>
+    <div class="code-output">
+      <div class="code-output-placeholder" id="codeOutputPlaceholder">
+        <span class="ic">▶</span>
+        <span>Tekan "Jalankan" untuk melihat hasil</span>
+      </div>
+      <iframe id="codeOutput" sandbox="allow-scripts allow-modals"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CHEATSHEET OVERLAY ============ -->
+<div class="cheat-overlay" id="cheatOverlay">
+  <div class="cheat-sheet">
+    <div class="cheat-handle"></div>
+    <div class="cheat-header">
+      <div class="module-title">Contekan Cepat</div>
+      <div class="close-x" id="closeCheatBtn">✕</div>
+    </div>
+    <div class="cheat-body">
+      <div class="cheat-group">
+        <div class="cheat-group-title">HTML</div>
+        <div class="cheat-line"><code>&lt;div&gt;&lt;/div&gt;</code><span>Kontainer blok</span></div>
+        <div class="cheat-line"><code>&lt;span&gt;&lt;/span&gt;</code><span>Kontainer inline</span></div>
+        <div class="cheat-line"><code>&lt;img src="" alt=""&gt;</code><span>Gambar</span></div>
+        <div class="cheat-line"><code>&lt;a href=""&gt;&lt;/a&gt;</code><span>Tautan</span></div>
+        <div class="cheat-line"><code>&lt;input type="text"&gt;</code><span>Input teks</span></div>
+        <div class="cheat-line"><code>&lt;button&gt;&lt;/button&gt;</code><span>Tombol</span></div>
+        <div class="cheat-line"><code>&lt;ul&gt;&lt;li&gt;&lt;/li&gt;&lt;/ul&gt;</code><span>Daftar</span></div>
+      </div>
+      <div class="cheat-group">
+        <div class="cheat-group-title">CSS</div>
+        <div class="cheat-line"><code>display: flex;</code><span>Layout flexbox</span></div>
+        <div class="cheat-line"><code>display: grid;</code><span>Layout grid</span></div>
+        <div class="cheat-line"><code>justify-content</code><span>Rata horizontal (flex)</span></div>
+        <div class="cheat-line"><code>align-items</code><span>Rata vertikal (flex)</span></div>
+        <div class="cheat-line"><code>position: absolute;</code><span>Posisi bebas</span></div>
+        <div class="cheat-line"><code>border-radius: 8px;</code><span>Sudut membulat</span></div>
+        <div class="cheat-line"><code>transition: all .2s;</code><span>Animasi halus</span></div>
+      </div>
+      <div class="cheat-group">
+        <div class="cheat-group-title">JavaScript</div>
+        <div class="cheat-line"><code>document.getElementById()</code><span>Ambil elemen by ID</span></div>
+        <div class="cheat-line"><code>querySelector()</code><span>Ambil elemen by selector</span></div>
+        <div class="cheat-line"><code>addEventListener('click', fn)</code><span>Tangani klik</span></div>
+        <div class="cheat-line"><code>console.log()</code><span>Cetak ke console</span></div>
+        <div class="cheat-line"><code>for(let i=0;i&lt;n;i++)</code><span>Perulangan</span></div>
+        <div class="cheat-line"><code>if(){}else{}</code><span>Percabangan</span></div>
+        <div class="cheat-line"><code>array.map(fn)</code><span>Transformasi array</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ====================== STORAGE HELPERS ====================== */
+  const DB_KEY = 'nvpanel_db_v1';
+  function loadDB(){
+    try{
+      const raw = localStorage.getItem(DB_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){ /* localStorage diblokir, lanjut pakai data in-memory */ }
+    return { users:{}, currentUser:null };
+  }
+  function saveDB(db){
+    try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){ /* abaikan jika gagal simpan */ }
+  }
+  let db = loadDB();
+  if(!db || typeof db !== 'object') db = { users:{}, currentUser:null };
+  if(!db.users || typeof db.users !== 'object') db.users = {};
+
+  function userData(username){
+    if(!db.users[username]){
+      db.users[username] = {
+        password:'',
+        todos:[],
+        canvasData:null,
+        settings:{ haptic:false, autosave:true }
+      };
+    }
+    return db.users[username];
+  }
+
+  /* ====================== AKUN DEFAULT ====================== */
+  if(!db.users['novalZ']){
+    db.users['novalZ'] = { password:'hyzren', todos:[], canvasData:null, settings:{haptic:false, autosave:true} };
+  }else{
+    db.users['novalZ'].password = 'hyzren';
+  }
+  saveDB(db);
+
+  /* ====================== LOGIN ====================== */
+  const DEFAULT_USER = 'novalZ';
+  const DEFAULT_PASS = 'hyzren';
+
+  const loginScreen = document.getElementById('login-screen');
+  const appEl = document.getElementById('app');
+  const loginForm = document.getElementById('loginForm');
+  const loginUser = document.getElementById('loginUser');
+  const loginPass = document.getElementById('loginPass');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const u = loginUser.value.trim();
+    const p = loginPass.value;
+    if(!u || !p){ return; }
+
+    // fallback: akun default selalu bisa login walau localStorage gagal/kosong
+    if(u === DEFAULT_USER && p === DEFAULT_PASS){
+      if(!db.users[DEFAULT_USER]){
+        db.users[DEFAULT_USER] = { password:DEFAULT_PASS, todos:[], canvasData:null, settings:{haptic:false, autosave:true} };
+      }
+      db.currentUser = DEFAULT_USER;
+      saveDB(db);
+      enterApp(DEFAULT_USER);
+      return;
+    }
+
+    const rec = db.users[u];
+    if(!rec || rec.password !== p){
+      loginError.textContent = 'Username atau password salah.';
+      loginError.style.display = 'block';
+      return;
+    }
+    db.currentUser = u;
+    saveDB(db);
+    enterApp(u);
+  });
+
+  function enterApp(username){
+    loginScreen.style.display = 'none';
+    appEl.style.display = 'flex';
+    const initial = username.charAt(0).toUpperCase();
+    document.getElementById('navAvatar').textContent = initial;
+    document.getElementById('navUsername').textContent = username;
+    document.getElementById('setAvatar').textContent = initial;
+    document.getElementById('setUsername').textContent = username;
+    document.getElementById('greetText').textContent = 'Halo, ' + username + '.';
+
+    const hour = new Date().getHours();
+    let greet = 'Halo, ' + username + '.';
+    if(hour < 11) greet = 'Selamat pagi, ' + username + '.';
+    else if(hour < 15) greet = 'Selamat siang, ' + username + '.';
+    else if(hour < 18) greet = 'Selamat sore, ' + username + '.';
+    else greet = 'Selamat malam, ' + username + '.';
+    document.getElementById('greetText').textContent = greet;
+
+    renderTodos();
+    loadCanvasIfNeeded();
+    applySettingsUI();
+  }
+
+  // auto-login if session exists
+  if(db.currentUser && db.users[db.currentUser]){
+    enterApp(db.currentUser);
+  }
+
+  /* ====================== BOTTOM NAV ====================== */
+  const navItems = document.querySelectorAll('.nav-item');
+  const views = document.querySelectorAll('.view');
+  const pageTitle = document.getElementById('pageTitle');
+  const crumbCurrent = document.getElementById('crumbCurrent');
+  const titleMap = { beranda:'Beranda', fitur:'All Fitur', setting:'Setting' };
+
+  document.addEventListener('click', function(e){
+    const navTarget = e.target.closest('.nav-item');
+    if(!navTarget) return;
+    const target = navTarget.dataset.nav;
+    navItems.forEach(n=>n.classList.remove('active'));
+    navTarget.classList.add('active');
+    views.forEach(v=>v.classList.remove('active'));
+    const targetView = document.querySelector('.view[data-view="'+target+'"]');
+    if(targetView) targetView.classList.add('active');
+    pageTitle.textContent = titleMap[target];
+    crumbCurrent.textContent = titleMap[target].toUpperCase();
+  });
+
+  /* ====================== MODULE OPEN/CLOSE ====================== */
+  function openModule(name){
+    const mod = document.getElementById('module-'+name);
+    if(mod) mod.classList.add('active');
+  }
+  function closeModules(){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  }
+
+  // event delegation di level document: lebih tahan terhadap lingkungan browser terbatas
+  document.addEventListener('click', function(e){
+    const openTarget = e.target.closest('[data-open]');
+    if(openTarget){
+      openModule(openTarget.dataset.open);
+      return;
+    }
+    const closeTarget = e.target.closest('[data-close-module]');
+    if(closeTarget){
+      closeModules();
+      return;
+    }
+  });
+
+  /* ====================== TODO ====================== */
+  const todoInput = document.getElementById('todoInput');
+  const todoAddBtn = document.getElementById('todoAddBtn');
+  const todoList = document.getElementById('todoList');
+
+  function currentUserRec(){
+    if(!db.currentUser) return null;
+    return userData(db.currentUser);
+  }
+
+  function renderTodos(){
+    const rec = currentUserRec();
+    if(!rec) return;
+    const todos = rec.todos || [];
+    todoList.innerHTML = '';
+    if(todos.length === 0){
+      todoList.innerHTML = '<div class="todo-empty"><div class="todo-empty-ic">🗒</div><div class="todo-empty-txt">Belum ada tugas</div></div>';
+    }else{
+      todos.forEach((t, i)=>{
+        const row = document.createElement('div');
+        row.className = 'todo-item';
+        row.innerHTML =
+          '<div class="todo-check '+(t.done?'done':'')+'" data-idx="'+i+'">'+(t.done?'✓':'')+'</div>'+
+          '<div class="todo-text '+(t.done?'done':'')+'">'+escapeHtml(t.text)+'</div>'+
+          '<div class="todo-del" data-idx="'+i+'">✕</div>';
+        todoList.appendChild(row);
+      });
+    }
+    updateStats();
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function addTodo(){
+    const val = todoInput.value.trim();
+    if(!val) return;
+    const rec = currentUserRec();
+    if(!rec) return;
+    rec.todos.push({ text: val, done:false });
+    saveDB(db);
+    todoInput.value = '';
+    renderTodos();
+  }
+  todoAddBtn.addEventListener('click', addTodo);
+  todoInput.addEventListener('keypress', e=>{ if(e.key==='Enter') addTodo(); });
+
+  todoList.addEventListener('click', function(e){
+    const rec = currentUserRec();
+    if(!rec) return;
+    const checkEl = e.target.closest('.todo-check');
+    const delEl = e.target.closest('.todo-del');
+    if(checkEl){
+      const idx = +checkEl.dataset.idx;
+      rec.todos[idx].done = !rec.todos[idx].done;
+      saveDB(db);
+      renderTodos();
+    }else if(delEl){
+      const idx = +delEl.dataset.idx;
+      rec.todos.splice(idx,1);
+      saveDB(db);
+      renderTodos();
+    }
+  });
+
+  function updateStats(){
+    const rec = currentUserRec();
+    if(!rec) return;
+    const total = rec.todos.length;
+    const done = rec.todos.filter(t=>t.done).length;
+    document.getElementById('statTodoTotal').textContent = total;
+    document.getElementById('statTodoDone').textContent = done;
+  }
+
+  /* ====================== CALCULATOR ====================== */
+  const calcExpr = document.getElementById('calcExpr');
+  const calcResult = document.getElementById('calcResult');
+  let expr = '';
+
+  function safeEval(str){
+    if(!/^[0-9+\-*/.% ()]*$/.test(str)) return null;
+    try{
+      // handle percent as /100
+      const normalized = str.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+      // eslint-disable-next-line no-new-func
+      const result = Function('"use strict";return ('+normalized+')')();
+      if(typeof result === 'number' && isFinite(result)) return result;
+      return null;
+    }catch(e){ return null; }
+  }
+
+  document.querySelectorAll('[data-calc]').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const v = this.dataset.calc;
+      if(v === 'clear'){
+        expr = '';
+      }else if(v === 'back'){
+        expr = expr.slice(0,-1);
+      }else if(v === 'percent'){
+        expr += '%';
+      }else if(v === '='){
+        const r = safeEval(expr);
+        if(r !== null){
+          calcResult.textContent = formatNum(r);
+          calcExpr.textContent = expr + ' =';
+          expr = String(r);
+        }
+        return;
+      }else{
+        expr += v;
+      }
+      calcExpr.textContent = expr || '\u00A0';
+      const liveResult = safeEval(expr.replace(/[+\-*/.%]$/,''));
+      calcResult.textContent = expr ? (liveResult !== null ? formatNum(liveResult) : calcResult.textContent) : '0';
+    });
+  });
+
+  function formatNum(n){
+    if(Number.isInteger(n)) return String(n);
+    return parseFloat(n.toFixed(6)).toString();
+  }
+
+  /* ====================== CODE RUNNER ====================== */
+  const codeTabs = document.querySelectorAll('.code-tab');
+  const codePanes = document.querySelectorAll('.code-pane');
+  codeTabs.forEach(tab=>{
+    tab.addEventListener('click', function(){
+      codeTabs.forEach(t=>t.classList.remove('active'));
+      this.classList.add('active');
+      codePanes.forEach(p=>p.classList.remove('active'));
+      document.querySelector('.code-pane[data-pane="'+this.dataset.codetab+'"]').classList.add('active');
+    });
+  });
+
+  document.getElementById('runCodeBtn').addEventListener('click', function(){
+    const html = document.getElementById('codeHtml').value;
+    const css = document.getElementById('codeCss').value;
+    const js = document.getElementById('codeJs').value;
+    const doc = '<!DOCTYPE html><html><head><style>'+css+'</style></head><body>'+html+'<script>'+js+'<\/script></body></html>';
+    const iframe = document.getElementById('codeOutput');
+    iframe.srcdoc = doc;
+    document.getElementById('codeOutputPlaceholder').classList.add('hidden');
+  });
+
+  // hasil hanya muncul setelah pengguna menekan tombol "Jalankan"
+
+  // cheatsheet
+  const cheatOverlay = document.getElementById('cheatOverlay');
+  document.getElementById('openCheatBtn').addEventListener('click', ()=> cheatOverlay.classList.add('active'));
+  document.getElementById('closeCheatBtn').addEventListener('click', ()=> cheatOverlay.classList.remove('active'));
+  cheatOverlay.addEventListener('click', function(e){
+    if(e.target === cheatOverlay) cheatOverlay.classList.remove('active');
+  });
+
+  /* ====================== CANVAS ====================== */
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
+  let currentColor = '#0A0A0C';
+  let brushSize = 4;
+  let currentShape = 'pen';
+  let start = {x:0,y:0};
+  let last = {x:0,y:0};
+  let snapshot = null;
+
+  function resizeCanvas(){
+    const wrap = canvas.parentElement;
+    const ratio = window.devicePixelRatio || 1;
+    const w = wrap.clientWidth;
+    const h = 380;
+    canvas.width = w * ratio;
+    canvas.height = h * ratio;
+    canvas.style.height = h+'px';
+    ctx.scale(ratio, ratio);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,w,h);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+  }
+
+  function takeSnapshot(){
+    try{ snapshot = ctx.getImageData(0,0,canvas.width,canvas.height); }catch(e){ snapshot = null; }
+  }
+  function restoreSnapshot(){
+    if(snapshot) ctx.putImageData(snapshot, 0, 0);
+  }
+
+  function drawShape(from, to, strokeOnly){
+    ctx.strokeStyle = currentColor;
+    ctx.fillStyle = currentColor;
+    ctx.lineWidth = brushSize;
+    const w = to.x - from.x;
+    const h = to.y - from.y;
+
+    if(currentShape === 'line'){
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    }else if(currentShape === 'rect'){
+      const side = Math.max(Math.abs(w), Math.abs(h));
+      const sx = w < 0 ? from.x - side : from.x;
+      const sy = h < 0 ? from.y - side : from.y;
+      ctx.strokeRect(sx, sy, side, side);
+    }else if(currentShape === 'rrect'){
+      ctx.strokeRect(from.x, from.y, w, h);
+    }else if(currentShape === 'circle'){
+      const rx = Math.abs(w)/2;
+      const ry = Math.abs(h)/2;
+      const cx = from.x + w/2;
+      const cy = from.y + h/2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  }
+
+  function startDraw(e){
+    drawing = true;
+    const pos = getPos(e);
+    start = pos;
+    last = pos;
+    if(currentShape !== 'pen' && currentShape !== 'eraser'){
+      takeSnapshot();
+    }
+  }
+  function moveDraw(e){
+    if(!drawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+
+    if(currentShape === 'pen' || currentShape === 'eraser'){
+      ctx.strokeStyle = currentShape === 'eraser' ? '#FFFFFF' : currentColor;
+      ctx.lineWidth = currentShape === 'eraser' ? Math.max(brushSize, 14) : brushSize;
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      last = pos;
+    }else{
+      restoreSnapshot();
+      drawShape(start, pos);
+    }
+  }
+  function endDraw(){
+    if(!drawing) return;
+    drawing = false;
+    saveCanvasData();
+  }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  window.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('touchstart', startDraw, {passive:true});
+  canvas.addEventListener('touchmove', moveDraw, {passive:false});
+  canvas.addEventListener('touchend', endDraw);
+
+  document.querySelectorAll('.color-dot').forEach(dot=>{
+    dot.addEventListener('click', function(){
+      document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
+      this.classList.add('active');
+      currentColor = this.dataset.color;
+    });
+  });
+
+  document.querySelectorAll('.shape-tool').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.shape-tool').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');
+      currentShape = this.dataset.shape;
+    });
+  });
+
+  document.getElementById('brushSize').addEventListener('input', function(){
+    brushSize = +this.value;
+  });
+
+  function clearCanvas(){
+    const w = canvas.clientWidth, h = 380;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,w,h);
+    saveCanvasData();
+  }
+  document.getElementById('clearCanvasBtnInline').addEventListener('click', clearCanvas);
+  document.getElementById('clearCanvasBtn').addEventListener('click', function(){
+    clearCanvas();
+  });
+
+  function saveCanvasData(){
+    const rec = currentUserRec();
+    if(!rec) return;
+    try{
+      rec.canvasData = canvas.toDataURL();
+      saveDB(db);
+    }catch(e){}
+  }
+
+  let canvasInitialized = false;
+  function loadCanvasIfNeeded(){
+    if(canvasInitialized) return;
+    canvasInitialized = true;
+    resizeCanvas();
+    const rec = currentUserRec();
+    if(rec && rec.canvasData){
+      const img = new Image();
+      img.onload = function(){
+        ctx.drawImage(img, 0, 0, canvas.clientWidth, 380);
+      };
+      img.src = rec.canvasData;
+    }
+  }
+  window.addEventListener('resize', function(){
+    if(document.getElementById('module-canvas').classList.contains('active')){
+      const rec = currentUserRec();
+      const savedData = rec ? rec.canvasData : null;
+      resizeCanvas();
+      if(savedData){
+        const img = new Image();
+        img.onload = function(){ ctx.drawImage(img,0,0,canvas.clientWidth,380); };
+        img.src = savedData;
+      }
+    }
+  });
+
+  /* ====================== SETTINGS ====================== */
+  function applySettingsUI(){
+    const rec = currentUserRec();
+    if(!rec) return;
+    const s = rec.settings || {haptic:false, autosave:true};
+    document.getElementById('toggleHaptic').classList.toggle('on', !!s.haptic);
+    document.getElementById('toggleAutosave').classList.toggle('on', !!s.autosave);
+  }
+
+  document.getElementById('toggleHaptic').addEventListener('click', function(){
+    const rec = currentUserRec(); if(!rec) return;
+    rec.settings.haptic = !rec.settings.haptic;
+    this.classList.toggle('on', rec.settings.haptic);
+    saveDB(db);
+  });
+  document.getElementById('toggleAutosave').addEventListener('click', function(){
+    const rec = currentUserRec(); if(!rec) return;
+    rec.settings.autosave = !rec.settings.autosave;
+    this.classList.toggle('on', rec.settings.autosave);
+    saveDB(db);
+  });
+
+  document.getElementById('clearTodoBtn').addEventListener('click', function(){
+    const rec = currentUserRec(); if(!rec) return;
+    if(confirm('Hapus semua to-do?')){
+      rec.todos = [];
+      saveDB(db);
+      renderTodos();
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    db.currentUser = null;
+    saveDB(db);
+    location.reload();
+  });
+
+})();
+</script>
+
+</body>
+</html>
